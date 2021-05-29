@@ -4,6 +4,7 @@ using System.Net;
 using System.Net.Http;
 using Microsoft.AspNetCore.Mvc;
 using PISLab.Models;
+using PISLab.Storage;
 
 namespace PISLab.Controllers
 {
@@ -11,7 +12,7 @@ namespace PISLab.Controllers
     [ApiController]
     public class ProductController : ControllerBase
     {
-        private static List<Product> _memCache = new List<Product>();
+        private static IStorage<Product> _memCache = new MemCache();
 
         [HttpGet]
         public ActionResult<IEnumerable<Product>> Get()
@@ -20,11 +21,11 @@ namespace PISLab.Controllers
         }
 
         [HttpGet("{id}")]
-        public ActionResult<Product> Get(int id)
+        public ActionResult<Product> Get(Guid id)
         {
-            if (_memCache.Count <= id) throw new IndexOutOfRangeException("No such");
+            if (!_memCache.Has(id)) return NotFound("No such");
 
-            return Ok(_memCache[id]);
+           return Ok(_memCache[id]);
         }
 
         [HttpPost]
@@ -40,29 +41,29 @@ namespace PISLab.Controllers
         }
 
         [HttpPut("{id}")]
-        public IActionResult Put(int id, [FromBody] Product value)
+        public IActionResult Put(Guid id, [FromBody] Product value)
         {
-            if (_memCache.Count <= id) return NotFound("No such");
+            if (!_memCache.Has(id)) return NotFound("No such");
 
-            var validationResult = value.Validate();
+           var validationResult = value.Validate();
 
-            if (!validationResult.IsValid) return BadRequest(validationResult.Errors);
+           if (!validationResult.IsValid) return BadRequest(validationResult.Errors);
 
-            var previousValue = _memCache[id];
-            _memCache[id] = value;
+           var previousValue = _memCache[id];
+           _memCache[id] = value;
 
-            return Ok($"{previousValue.ToString()} has been updated to {value.ToString()}");
+           return Ok($"{previousValue.ToString()} has been updated to {value.ToString()}");
         }
 
         [HttpDelete("{id}")]
-        public IActionResult Delete(int id)
+        public IActionResult Delete(Guid id)
         {
-            if (_memCache.Count <= id) return NotFound("No such");
+            if (!_memCache.Has(id)) return NotFound("No such");
 
-            var valueToRemove = _memCache[id];
-            _memCache.RemoveAt(id);
+           var valueToRemove = _memCache[id];
+           _memCache.RemoveAt(id);
 
-            return Ok($"{valueToRemove.ToString()} has been removed");
+           return Ok($"{valueToRemove.ToString()} has been removed");
         }
     }
 }
