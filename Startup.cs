@@ -44,6 +44,7 @@ namespace PISLab
                 default:
                     throw new IndexOutOfRangeException($"Storage type '{Configuration["Storage:Type"]}' is unknown");
             }
+            services.AddScoped<StorageService, StorageService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
